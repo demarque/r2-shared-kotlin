@@ -23,13 +23,13 @@ import org.readium.r2.shared.util.logging.WarningLogger
 import org.readium.r2.shared.extensions.optStringsFromArrayOrSingle
 import org.readium.r2.shared.extensions.putIfNotEmpty
 import org.readium.r2.shared.extensions.removeLastComponent
+import org.readium.r2.shared.format.MediaType
 import org.readium.r2.shared.publication.epub.listOfAudioClips
 import org.readium.r2.shared.publication.epub.listOfVideoClips
 import org.readium.r2.shared.toJSON
 import org.readium.r2.shared.util.logging.JsonWarning
 import org.readium.r2.shared.util.logging.log
 import timber.log.Timber
-import java.io.Serializable
 import java.net.URL
 import java.net.URLEncoder
 
@@ -175,7 +175,7 @@ data class Publication(
     fun setSelfLink(href: String) {
         links = links.toMutableList().apply {
             removeAll { it.rels.contains("self") }
-            add(Link(href = href, type = "application/webpub+json", rels = setOf("self")))
+            add(Link(href = href, type = MediaType.WEBPUB_MANIFEST.toString(), rels = setOf("self")))
         }
     }
 
@@ -212,6 +212,21 @@ data class Publication(
      */
     fun linkWithRel(rel: String): Link? =
         link { it.rels.contains(rel) }
+
+    /**
+     * Finds the first [Link] having the given [rel] matching the given [predicate], in the
+     * publications' links.
+     */
+    internal fun linkWithRelMatching(predicate: (String) -> Boolean): Link? {
+        for (link in links) {
+            for (rel in link.rels) {
+                if (predicate(rel)) {
+                    return link
+                }
+            }
+        }
+        return null
+    }
 
     /**
      * Finds the first [Link] having the given [href] in the publications's links.
@@ -278,6 +293,30 @@ data class Publication(
     fun copyWithPositionsFactory(createFactory: Publication.() -> PositionListFactory): Publication {
         return run { copy(positionsFactory = createFactory()) }
     }
+
+    /**
+     * Returns whether all the resources in the reading order are bitmaps.
+     */
+    internal val allReadingOrderIsBitmap: Boolean get() =
+        readingOrder.all {
+            it.mediaType?.isBitmap == true
+        }
+
+    /**
+     * Returns whether all the resources in the reading order are audio clips.
+     */
+    internal val allReadingOrderIsAudio: Boolean get() =
+        readingOrder.all {
+            it.mediaType?.isAudio == true
+        }
+
+    /**
+     * Returns whether all the resources in the reading order are contained in any of the given media types.
+     */
+    internal fun allReadingOrderMatchesAnyOf(vararg mediaTypes: MediaType): Boolean =
+        readingOrder.all { link ->
+            mediaTypes.any { link.mediaType?.matches(it) == true }
+        }
 
     companion object {
 
