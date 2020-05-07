@@ -19,8 +19,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.readium.r2.shared.JSONable
 import org.readium.r2.shared.ReadiumCSSName
-import org.readium.r2.shared.util.logging.WarningLogger
-import org.readium.r2.shared.extensions.optStringsFromArrayOrSingle
+import org.readium.r2.shared.extensions.*
+import org.readium.r2.shared.extensions.HashAlgorithm
+import org.readium.r2.shared.extensions.hash
 import org.readium.r2.shared.extensions.putIfNotEmpty
 import org.readium.r2.shared.extensions.removeLastComponent
 import org.readium.r2.shared.format.MediaType
@@ -28,6 +29,7 @@ import org.readium.r2.shared.publication.epub.listOfAudioClips
 import org.readium.r2.shared.publication.epub.listOfVideoClips
 import org.readium.r2.shared.toJSON
 import org.readium.r2.shared.util.logging.JsonWarning
+import org.readium.r2.shared.util.logging.WarningLogger
 import org.readium.r2.shared.util.logging.log
 import timber.log.Timber
 import java.net.URL
@@ -383,9 +385,7 @@ data class Publication(
         fun localBaseUrlOf(filename: String, port: Int): String {
             val sanitizedFilename = filename
                 .removePrefix("/")
-                // If the filename contains + or %, then NanoHTTPD will fail, even after
-                // percent-encoding it.
-                .replace("[ +%]".toRegex(), "_")
+                .hash(HashAlgorithm.MD5)
                 .let { URLEncoder.encode(it, "UTF-8") }
 
             return "http://127.0.0.1:$port/$sanitizedFilename"
