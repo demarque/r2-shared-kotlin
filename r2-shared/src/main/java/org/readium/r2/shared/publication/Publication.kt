@@ -30,7 +30,6 @@ import org.readium.r2.shared.publication.epub.listOfAudioClips
 import org.readium.r2.shared.publication.epub.listOfVideoClips
 import org.readium.r2.shared.toJSON
 import org.readium.r2.shared.util.logging.JsonWarning
-import org.readium.r2.shared.util.logging.WarningLogger
 import org.readium.r2.shared.util.logging.log
 import timber.log.Timber
 import java.net.URL
