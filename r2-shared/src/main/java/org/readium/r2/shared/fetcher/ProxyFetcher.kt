@@ -12,10 +12,12 @@ package org.readium.r2.shared.fetcher
 import org.readium.r2.shared.publication.Link
 
 /** Delegates the creation of a [Resource] to a [closure]. */
-internal class ProxyFetcher(val closure: (Link, HrefParameters) -> Resource) : Fetcher {
+class ProxyFetcher(val closure: (Link) -> Resource) : Fetcher {
 
-    override fun get(link: Link, parameters: HrefParameters): Resource = closure(link, parameters)
+    override suspend fun links(): List<Link> = emptyList()
 
-    override fun close() {}
+    override fun get(link: Link): Resource = closure(link)
+
+    override suspend fun close() {}
 }
 
