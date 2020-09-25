@@ -9,6 +9,7 @@
 
 package org.readium.r2.shared.fetcher
 
+import kotlinx.coroutines.CancellationException
 import org.json.JSONObject
 import org.readium.r2.shared.extensions.coerceIn
 import org.readium.r2.shared.extensions.requireLengthFitInt
@@ -17,8 +18,8 @@ import org.readium.r2.shared.parser.xml.XmlParser
 import org.readium.r2.shared.publication.Link
 import org.readium.r2.shared.util.Try
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.nio.charset.Charset
-
 
 typealias ResourceTry<SuccessT> = Try<SuccessT, Resource.Error>
 
@@ -35,6 +36,16 @@ typealias ResourceTransformer = (Resource) -> Resource
  * Acts as a proxy to an actual resource by handling read access.
  */
 interface Resource {
+
+    /**
+     * Direct file to this resource, when available.
+     *
+     * This is meant to be used as an optimization for consumers which can't work efficiently
+     * with streams. However, [file] is not guaranteed to be set, for example if the resource
+     * underwent transformations or is being read from an archive. Therefore, consumers should
+     * always fallback on regular stream reading, using [read] or [ResourceInputStream].
+     */
+    val file: File? get() = null
 
     /**
      * Returns the link from which the resource was retrieved.
@@ -148,8 +159,35 @@ interface Resource {
          */
         object Unavailable : Error()
 
+        /**
+         * Equivalent to a 507 HTTP error.
+         *
+         * Used when the requested range is too large to be read in memory.
+         */
+        class OutOfMemory(cause: OutOfMemoryError) : Error(cause)
+
+        /**
+         * The request was cancelled by the caller.
+         *
+         * For example, when a coroutine is cancelled.
+         */
+        object Cancelled : Error()
+
         /** For any other error, such as HTTP 500. */
         class Other(cause: Throwable) : Error(cause)
+
+        companion object {
+
+            fun wrap(e: Throwable): Error =
+                when (e) {
+                    is Error -> e
+                    is CancellationException -> Cancelled
+                    is OutOfMemoryError -> OutOfMemory(e)
+                    else -> Other(e)
+                }
+
+        }
+
     }
 }
 
@@ -316,20 +354,11 @@ class LazyResource(private val factory: suspend () -> Resource) : Resource {
 inline fun <R, S> ResourceTry<S>.mapCatching(transform: (value: S) -> R): ResourceTry<R> =
     try {
         Try.success((transform(getOrThrow())))
-    } catch (e: Resource.Error) {
-        Try.failure(e)
     } catch (e: Exception) {
-        Try.failure(Resource.Error.Other(e))
+        Try.failure(Resource.Error.wrap(e))
+    } catch (e: OutOfMemoryError) { // We don't want to catch any Error, only OOM.
+        Try.failure(Resource.Error.wrap(e))
     }
 
 inline fun <R, S> ResourceTry<S>.flatMapCatching(transform: (value: S) -> ResourceTry<R>): ResourceTry<R> =
     mapCatching(transform).flatMap { it }
-
-internal inline fun <S> Try.Companion.wrap(compute: () -> S): ResourceTry<S> =
-    try {
-        success(compute())
-    } catch (e: Resource.Error) {
-        failure(e)
-    } catch (e: Exception) {
-        failure(Resource.Error.Other(e))
-    }
