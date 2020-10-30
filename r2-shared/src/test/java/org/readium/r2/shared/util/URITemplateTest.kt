@@ -33,7 +33,7 @@ class URITemplateTest {
             "w" to "w"
         )
         assertEquals(
-            "/urlaaa,Hello%2C+world,bname45,b,w",
+            "/urlaaa,Hello,%20world,bname45,b,w",
             template.expand(parameters)
         )
     }
@@ -47,8 +47,18 @@ class URITemplateTest {
             "y" to "b"
         )
         assertEquals(
-            "/url?x=aaa&hello=Hello%2C+world&y=bname",
+            "/url?x=aaa&hello=Hello,%20world&y=bname",
             template.expand(parameters)
+        )
+
+        assertEquals(
+            "https://lsd-test.edrlab.org/licenses/39ef1ff2-cda2-4219-a26a-d504fbb24c17/renew?end=2020-11-12T16:02:00.000%2B01:00&id=38dfd7ba-a80b-4253-a047-e6aa9c21d6f0&name=Pixel%203a",
+            URITemplate("https://lsd-test.edrlab.org/licenses/39ef1ff2-cda2-4219-a26a-d504fbb24c17/renew{?end,id,name}")
+                .expand(mapOf(
+                    "id" to "38dfd7ba-a80b-4253-a047-e6aa9c21d6f0",
+                    "name" to "Pixel 3a",
+                    "end" to "2020-11-12T16:02:00.000+01:00"
+                ))
         )
     }
 }

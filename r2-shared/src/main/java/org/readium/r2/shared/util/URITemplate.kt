@@ -9,9 +9,6 @@
 
 package org.readium.r2.shared.util
 
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-
 /**
  * A lightweight implementation of URI Template (RFC 6570).
  *
@@ -37,8 +34,12 @@ data class URITemplate(val uri: String) {
      */
     fun expand(parameters: Map<String, String>): String {
         @Suppress("NAME_SHADOWING")
+        // `+` is considered like an encoded space, and will not be properly encoded in parameters.
+        // This is an issue for ISO 8601 date for example.
+        // As a workaround, we encode manually this character. We don't do it in the full URI,
+        // because it could contain some legitimate +-as-space characters.
         val parameters = parameters.mapValues {
-            URLEncoder.encode(it.value, StandardCharsets.UTF_8.toString())
+            it.value.replace("+", "~~+~~")
         }
 
         fun expandSimpleString(string: String, parameters: Map<String, String>): String =
@@ -49,11 +50,15 @@ data class URITemplate(val uri: String) {
 
         // Escaping the last } is somehow required, otherwise the regex can't be parsed on a Pixel
         // 3a. However, without it works with the unit tests.
-        return "\\{(\\??)([^}]+)\\}".toRegex().replace(uri) {
+        val expanded = "\\{(\\??)([^}]+)\\}".toRegex().replace(uri) {
             if (it.groupValues[1].isEmpty())
                 expandSimpleString(it.groupValues[2], parameters)
             else
                 expandFormStyle(it.groupValues[2], parameters)
         }
+
+        return Href(expanded).percentEncodedString
+            .replace("~~%20~~", "%2B")
     }
+
 }
