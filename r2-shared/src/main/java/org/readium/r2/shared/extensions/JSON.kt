@@ -10,7 +10,7 @@
 package org.readium.r2.shared.extensions
 
 import android.os.Parcel
-import kotlinx.android.parcel.Parceler
+import kotlinx.parcelize.Parceler
 import org.json.JSONArray
 import org.json.JSONObject
 import org.readium.r2.shared.JSONable
@@ -155,11 +155,17 @@ fun JSONObject.optPositiveDouble(name: String, fallback: Double = -1.0, remove: 
 }
 
 /**
- * Returns the value mapped by [name] if it exists, coercing it if necessary, or [null] if no such
+ * Returns the value mapped by [name] if it exists, coercing it if necessary, or `null` if no such
  * mapping exists.
  * If [remove] is true, then the mapping will be removed from the [JSONObject].
  */
 fun JSONObject.optNullableString(name: String, remove: Boolean = false): String? {
+    // optString() returns "null" if the key exists but contains the `null` value.
+    // https://stackoverflow.com/questions/18226288/json-jsonobject-optstring-returns-string-null
+    if (isNull(name)) {
+        return null
+    }
+
     val string = optString(name)
     val value = if (string != "") string else null
     if (remove) {
@@ -169,7 +175,7 @@ fun JSONObject.optNullableString(name: String, remove: Boolean = false): String?
 }
 
 /**
- * Returns the value mapped by [name] if it exists, coercing it if necessary, or [null] if no such
+ * Returns the value mapped by [name] if it exists, coercing it if necessary, or `null` if no such
  * mapping exists.
  * If [remove] is true, then the mapping will be removed from the [JSONObject].
  */
@@ -185,7 +191,7 @@ fun JSONObject.optNullableBoolean(name: String, remove: Boolean = false): Boolea
 }
 
 /**
- * Returns the value mapped by [name] if it exists, coercing it if necessary, or [null] if no such
+ * Returns the value mapped by [name] if it exists, coercing it if necessary, or `null` if no such
  * mapping exists.
  * If [remove] is true, then the mapping will be removed from the [JSONObject].
  */
@@ -201,7 +207,7 @@ fun JSONObject.optNullableInt(name: String, remove: Boolean = false): Int? {
 }
 
 /**
- * Returns the value mapped by [name] if it exists, coercing it if necessary, or [null] if no such
+ * Returns the value mapped by [name] if it exists, coercing it if necessary, or `null` if no such
  * mapping exists.
  * If [remove] is true, then the mapping will be removed from the [JSONObject].
  */
@@ -217,7 +223,7 @@ fun JSONObject.optNullableLong(name: String, remove: Boolean = false): Long? {
 }
 
 /**
- * Returns the value mapped by [name] if it exists, coercing it if necessary, or [null] if no such
+ * Returns the value mapped by [name] if it exists, coercing it if necessary, or `null` if no such
  * mapping exists.
  * If [remove] is true, then the mapping will be removed from the [JSONObject].
  */
@@ -252,7 +258,7 @@ fun JSONObject.optStringsFromArrayOrSingle(name: String, remove: Boolean = false
 /**
  * Returns a list containing the results of applying the given transform function to each element
  * in the original [JSONObject].
- * If the tranform returns [null], it is not included in the output list.
+ * If the tranform returns `null`, it is not included in the output list.
  */
 fun <T> JSONObject.mapNotNull(transform: (Pair<String, Any>) -> T?): List<T> {
     val result = mutableListOf<T>()
@@ -268,7 +274,7 @@ fun <T> JSONObject.mapNotNull(transform: (Pair<String, Any>) -> T?): List<T> {
 /**
  * Returns a list containing the results of applying the given transform function to each element
  * in the original [JSONArray].
- * If the tranform returns [null], it is not included in the output list.
+ * If the tranform returns `null`, it is not included in the output list.
  */
 fun <T> JSONArray.mapNotNull(transform: (Any) -> T?): List<T> {
     val result = mutableListOf<T>()
