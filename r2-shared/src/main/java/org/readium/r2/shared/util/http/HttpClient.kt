@@ -36,6 +36,10 @@ interface HttpClient {
                 HttpFetchResponse(response.response, body)
             }
 
+    // Declare a companion object to allow reading apps to extend it. For example, by adding a
+    // HttpClient.get(Context) constructor.
+    companion object
+
 }
 
 /**
@@ -74,11 +78,13 @@ class HttpFetchResponse(
 /**
  * Represents a successful HTTP response received from a server.
  *
+ * @param statusCode Response status code.
  * @param headers HTTP response headers, indexed by their name.
  * @param mediaType Media type sniffed from the `Content-Type` header and response body. Falls back
  *        on `application/octet-stream`.
  */
 data class HttpResponse(
+    val statusCode: Int,
     val headers: Map<String, List<String>>,
     val mediaType: MediaType,
 ) {
