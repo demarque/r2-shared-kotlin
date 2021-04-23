@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+* Crash with `HttpRequest.setPostForm()` on Android 6.
+
+
+## [2.0.0]
+
+### Added
+
 * `HttpFetcher` is a new publication fetcher able to serve remote resources through HTTP.
     * The actual HTTP requests are performed with an instance of `HttpClient`.
 * `HttpClient` is a new protocol exposing a high level API to perform HTTP requests.
