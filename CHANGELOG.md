@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+* A new Publication `SearchService` to search through the resources' content, with a default implementation `StringSearchService`.
+
 ### Fixed
 
 * Crash with `HttpRequest.setPostForm()` on Android 6.
