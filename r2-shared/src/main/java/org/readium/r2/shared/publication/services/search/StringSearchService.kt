@@ -14,6 +14,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.readium.r2.shared.Search
 import org.readium.r2.shared.fetcher.DefaultResourceContentExtractorFactory
 import org.readium.r2.shared.fetcher.ResourceContentExtractor
 import org.readium.r2.shared.publication.*
@@ -35,6 +36,7 @@ import java.util.*
  *
  * The actual search is implemented by the provided [searchAlgorithm].
  */
+@Search
 class StringSearchService(
     private val publication: Ref<Publication>,
     val language: String?,
@@ -81,7 +83,7 @@ class StringSearchService(
 
     private inner class Iterator(val publication: Publication, val query: String, val options: Options, val locale: Locale) : SearchIterator {
 
-        override var resultCount: Int? = 0
+        override var resultCount: Int = 0
             private set
 
         /**
@@ -107,7 +109,7 @@ class StringSearchService(
                 }
 
                 val locators = findLocators(index, link, text)
-                resultCount = (resultCount ?: 0) + locators.count()
+                resultCount += locators.count()
 
                 // If no occurrences were found in the current resource, skip to the next one
                 // automatically.
